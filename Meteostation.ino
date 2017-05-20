@@ -35,9 +35,9 @@ LiquidCrystal_I2C lcd(0x3F, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
 // знак Цельсия
 byte degree[8] = {
-  B00010,
-  B00101,
-  B00010,
+  B00011,
+  B00011,
+  B00000,
   B00000,
   B00000,
   B00000,
@@ -46,8 +46,7 @@ byte degree[8] = {
 };
 
 unsigned long last_time = 0; // время для задержки
-boolean l = 0;
-byte l1, l2;
+byte line = 0; //  для смещения строк на l
 
 void setup() {
   lcd.begin(LCD_CHAR, LCD_LINE);  // инициальзация экрана и включение подсветки
@@ -63,8 +62,8 @@ void loop() {
     last_time = millis() - 1;
     lcd.clear();
 
-    float h = dht.readHumidity();  //влажность
-    float t = dht.readTemperature();  //температура
+    int h = dht.readHumidity();  //влажность
+    int t = dht.readTemperature();  //температура
 
     if (isnan(h) || isnan(t)) {
       lcd.home();
@@ -72,25 +71,22 @@ void loop() {
       return;
     }
 
-    if (l == 1) {
-      l = 0;
-      l1 = 0;
-      l2 = 1;
-    } else {
-      l = 1;
-      l1 = 2;
-      l2 = 3;
-    }
-    
-    lcd.setCursor(0, l1);
+    lcd.setCursor(0, 0 + line);
     lcd.print("Temp: ");
     lcd.print(t);
-    lcd.print(" ");
     lcd.write((byte)0);
     lcd.print("C");
-    lcd.setCursor(0, l2);
+    lcd.setCursor(0, 1 + line);
     lcd.print("Humidity: ");
     lcd.print(h);
     lcd.print(" %");
+    lcd.setCursor(15, 3 - line);
+    lcd.print("TiERA");
+
+    if (line == 0) {
+      line = 2;
+    } else {
+      line = 0;
+    }
   }
 }
