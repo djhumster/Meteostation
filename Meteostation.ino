@@ -1,4 +1,5 @@
 /*
+    Written by Pavel Vishnyakov
     Метеостанция v0.2
     Требуются библиотеки:
     http://arduino-info.wikispaces.com/LCD-Blue-I2Chttp://arduino-info.wikispaces.com/LCD-Blue-I2C
