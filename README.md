@@ -14,3 +14,5 @@
 > ![Arduino IDE](https://cdn-learn.adafruit.com/assets/assets/000/038/115/medium800/weather_Screen_Shot_2016-12-26_at_12.52.24.png?1482753413)
 ### Макетная схема:  
 ![Breadboard1](https://github.com/djhumster/Meteostation/blob/slide_screen/Meteostation_bb.png?raw=true)
+### Принципиальная схема:  
+![Sheme](https://github.com/djhumster/Meteostation/blob/slide_screen/Meteostation_sheme.png?raw=true)
