@@ -77,7 +77,7 @@ void loop() {
     lcd.write((byte)0);
     lcd.print("C");
     lcd.setCursor(0, 1 + line);
-    lcd.print("Humidity: ");
+    lcd.print("Humid: ");
     lcd.print(h);
     lcd.print(" %");
     lcd.setCursor(15, 3 - line);
