@@ -2,8 +2,8 @@
     Written by Pavel Vishnyakov
     Метеостанция v0.2a
     Требуются библиотеки:
-    http://arduino-info.wikispaces.com/LCD-Blue-I2Chttp://arduino-info.wikispaces.com/LCD-Blue-I2C
-    https://learn.adafruit.com/dhthttps://learn.adafruit.com/dht
+    http://arduino-info.wikispaces.com/LCD-Blue-I2C
+    https://learn.adafruit.com/dht
     последняя требует доп. библиотеку, ВНИМАТЕЛЬНО читать мануал.
 */
 #include <DHT.h>
