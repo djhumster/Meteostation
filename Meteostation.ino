@@ -1,6 +1,6 @@
 /*
     Written by Pavel Vishnyakov
-    Метеостанция v0.2
+    Метеостанция v0.2a
     Требуются библиотеки:
     http://arduino-info.wikispaces.com/LCD-Blue-I2Chttp://arduino-info.wikispaces.com/LCD-Blue-I2C
     https://learn.adafruit.com/dhthttps://learn.adafruit.com/dht
@@ -46,6 +46,8 @@ byte degree[8] = {
 };
 
 unsigned long last_time = 0; // время для задержки
+boolean l = 0;
+byte l1, l2;
 
 void setup() {
   lcd.begin(LCD_CHAR, LCD_LINE);  // инициальзация экрана и включение подсветки
@@ -59,6 +61,7 @@ void setup() {
 void loop() {
   if (millis() - last_time > 5000) {
     last_time = millis() - 1;
+    lcd.clear();
 
     float h = dht.readHumidity();  //влажность
     float t = dht.readTemperature();  //температура
@@ -69,13 +72,23 @@ void loop() {
       return;
     }
 
-    lcd.setCursor(0, 0);
+    if (l == 1) {
+      l = 0;
+      l1 = 0;
+      l2 = 1;
+    } else {
+      l = 1;
+      l1 = 2;
+      l2 = 3;
+    }
+    
+    lcd.setCursor(0, l1);
     lcd.print("Temp: ");
     lcd.print(t);
     lcd.print(" ");
     lcd.write((byte)0);
     lcd.print("C");
-    lcd.setCursor(0, 1);
+    lcd.setCursor(0, l2);
     lcd.print("Humidity: ");
     lcd.print(h);
     lcd.print(" %");
