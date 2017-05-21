@@ -1,6 +1,6 @@
 /*
     Written by Pavel Vishnyakov
-    Метеостанция v0.2a
+    Метеостанция
     Требуются библиотеки:
     http://arduino-info.wikispaces.com/LCD-Blue-I2C
     https://learn.adafruit.com/dht
@@ -46,7 +46,7 @@ byte degree[8] = {
 };
 
 unsigned long last_time = 0; // время для задержки
-byte line = 0; //  для смещения строк на l
+byte line = 0; //  для смещения строк, для экранов 20х4 !!!
 
 void setup() {
   lcd.begin(LCD_CHAR, LCD_LINE);  // инициальзация экрана и включение подсветки
@@ -70,7 +70,7 @@ void loop() {
       lcd.print("Failed to read from sensor!");
       return;
     }
-
+    // убрать line, если НЕ нужно перемещать строки
     lcd.setCursor(0, 0 + line);
     lcd.print("Temp: ");
     lcd.print(t);
@@ -82,7 +82,7 @@ void loop() {
     lcd.print(" %");
     lcd.setCursor(15, 3 - line);
     lcd.print("TiERA");
-
+    //добавляет строкам смещение
     if (line == 0) {
       line = 2;
     } else {
