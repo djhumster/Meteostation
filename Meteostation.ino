@@ -28,6 +28,8 @@
 #define LCD_CHAR 20 // сколько символов на строку экрана
 #define LCD_LINE 4 // сколько строк экран
 
+const String VERSION = "v0.3d"; //  версия кода
+
 DHT dht(DHTPIN, DHTTYPE);
 
 // адрес i2c экрана как правило 0x27 или 0x3F
@@ -44,15 +46,52 @@ byte degree[8] = {
   B00000,
   B00000
 };
+// тире
+byte dash[8] = {
+  B00000,
+  B00000,
+  B00000,
+  B11111,
+  B11111,
+  B00000,
+  B00000,
+  B00000
+};
+// стрелки вверх
+byte arrowUp[8] = {
+  B00000,
+  B00100,
+  B01110,
+  B11111,
+  B00000,
+  B00100,
+  B01110,
+  B11111
+};
+// стрелки вниз
+byte arrowDown[8] = {
+  B00000,
+  B11111,
+  B01110,
+  B00100,
+  B00000,
+  B11111,
+  B01110,
+  B00100
+};
 
 unsigned long last_time = 0; // время для задержки
 byte line = 0; //  для смещения строк, для экранов 20х4 !!!
+int h_prev, t_prev; //  предыдущие значения температуры и влажности
 
 void setup() {
   lcd.begin(LCD_CHAR, LCD_LINE);  // инициальзация экрана и включение подсветки
   lcd.backlight();
   lcd.clear();
-  lcd.createChar(0, degree);  //  записываем символ Цельсия в память экрана
+  lcd.createChar(0, degree);  //  записываем символы в память экрана
+  lcd.createChar(1, dash);
+  lcd.createChar(2, arrowUp);
+  lcd.createChar(3, arrowDown);
 
   dht.begin();  //  инициальзация датчика влажности
 }
@@ -75,18 +114,56 @@ void loop() {
     lcd.print("Temp: ");
     lcd.print(t);
     lcd.write((byte)0);
-    lcd.print("C");
+    lcd.print("C ");
+    lcd.write(icon(t, 1));
     lcd.setCursor(0, 1 + line);
-    lcd.print("Humid: ");
+    lcd.print("Humi: ");
     lcd.print(h);
-    lcd.print(" %");
+    lcd.print(" % ");
+    lcd.write(icon(h, 2));
     lcd.setCursor(15, 3 - line);
-    lcd.print("v0.3");
+    lcd.print(VERSION);
     //добавляет строкам смещение
     if (line == 0) {
       line = 2;
     } else {
       line = 0;
     }
+
+    h_prev = h;
+    t_prev = t;
+  }
+}
+/*
+  функция выбора иконки изменения состояния температры/влажности
+*/
+byte icon(int i_cur, byte mode) {
+  switch (mode) {
+    // режим выбора иконки температуры
+    case 1: {
+        if (t_prev == i_cur) {
+          return 1;
+        }
+        if (t_prev < i_cur) {
+          return 2;
+        }
+        if (t_prev > i_cur) {
+          return 3;
+        }
+      }
+      break;
+    // режим выбора иконки плажности
+    case 2: {
+        if (h_prev == i_cur) {
+          return 1;
+        }
+        if (h_prev < i_cur) {
+          return 2;
+        }
+        if (h_prev > i_cur) {
+          return 3;
+        }
+      }
+      break;
   }
 }
