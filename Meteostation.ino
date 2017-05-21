@@ -1,8 +1,9 @@
 /*
-    Метеостанция v0.2
+    Written by Pavel Vishnyakov
+    Метеостанция
     Требуются библиотеки:
-    http://arduino-info.wikispaces.com/LCD-Blue-I2Chttp://arduino-info.wikispaces.com/LCD-Blue-I2C
-    https://learn.adafruit.com/dhthttps://learn.adafruit.com/dht
+    http://arduino-info.wikispaces.com/LCD-Blue-I2C
+    https://learn.adafruit.com/dht
     последняя требует доп. библиотеку, ВНИМАТЕЛЬНО читать мануал.
 */
 #include <DHT.h>
@@ -45,6 +46,7 @@ byte degree[8] = {
 };
 
 unsigned long last_time = 0; // время для задержки
+byte line = 0; //  для смещения строк, для экранов 20х4 !!!
 
 void setup() {
   lcd.begin(LCD_CHAR, LCD_LINE);  // инициальзация экрана и включение подсветки
@@ -58,25 +60,33 @@ void setup() {
 void loop() {
   if (millis() - last_time > 5000) {
     last_time = millis() - 1;
+    lcd.clear();
 
-    float h = dht.readHumidity();  //влажность
-    float t = dht.readTemperature();  //температура
+    int h = dht.readHumidity();  //влажность
+    int t = dht.readTemperature();  //температура
 
     if (isnan(h) || isnan(t)) {
       lcd.home();
       lcd.print("Failed to read from sensor!");
       return;
     }
-
-    lcd.setCursor(0, 0);
+    // убрать line, если НЕ нужно перемещать строки
+    lcd.setCursor(0, 0 + line);
     lcd.print("Temp: ");
     lcd.print(t);
-    lcd.print(" ");
     lcd.write((byte)0);
     lcd.print("C");
-    lcd.setCursor(0, 1);
-    lcd.print("Humidity: ");
+    lcd.setCursor(0, 1 + line);
+    lcd.print("Humid: ");
     lcd.print(h);
     lcd.print(" %");
+    lcd.setCursor(15, 3 - line);
+    lcd.print("TiERA");
+    //добавляет строкам смещение
+    if (line == 0) {
+      line = 2;
+    } else {
+      line = 0;
+    }
   }
 }
