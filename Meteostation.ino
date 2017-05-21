@@ -81,7 +81,7 @@ void loop() {
     lcd.print(h);
     lcd.print(" %");
     lcd.setCursor(15, 3 - line);
-    lcd.print("TiERA");
+    lcd.print("v0.3");
     //добавляет строкам смещение
     if (line == 0) {
       line = 2;
