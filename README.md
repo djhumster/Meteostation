@@ -7,6 +7,7 @@
 |1|LCD символьный экран с платой i2c шины (LCM2004 IIC)|
 |1|Резистор 10 кОм|
 |1|Макетная плата|  
+|1|Модуль часов реального времени I2C RTC DS1307|
 ### Требуются библиотеки:
 [New Liquid Crystal](http://arduino-info.wikispaces.com/LCD-Blue-I2C)  
 [DHT-sensor-library](https://learn.adafruit.com/dht)  
