@@ -4,11 +4,13 @@
     Требуются библиотеки:
     http://arduino-info.wikispaces.com/LCD-Blue-I2C
     https://learn.adafruit.com/dht
+    https://github.com/adafruit/RTClib
     последняя требует доп. библиотеку, ВНИМАТЕЛЬНО читать мануал.
 */
 #include <DHT.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+#include "RTClib.h"
 
 // задаем тип датчика влажности
 //#define DHTTYPE DHT22
@@ -34,6 +36,8 @@ DHT dht(DHTPIN, DHTTYPE);
 
 // адрес i2c экрана как правило 0x27 или 0x3F
 LiquidCrystal_I2C lcd(0x3F, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
+
+RTC_DS1307 rtc;
 
 // знак Цельсия
 byte degree[8] = {
@@ -84,6 +88,8 @@ unsigned long last_time = 0; // время для задержки
 byte line = 0; //  для смещения строк, для экранов 20х4 !!!
 int h_prev, t_prev; //  предыдущие значения температуры и влажности
 
+char daysOfTheWeek[7][12] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
 void setup() {
   lcd.begin(LCD_CHAR, LCD_LINE);  // инициальзация экрана и включение подсветки
   lcd.backlight();
@@ -93,13 +99,16 @@ void setup() {
   lcd.createChar(2, arrowUp);
   lcd.createChar(3, arrowDown);
 
-  dht.begin();  //  инициальзация датчика влажности
+  dht.begin(); //  инициальзация датчика влажности
+  rtc.begin(); // инициализация часов
+  rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); //  прописывает в RTC время компиляции скетча
 }
 
 void loop() {
   if (millis() - last_time > 5000) {
     last_time = millis() - 1;
     lcd.clear();
+    DateTime now = rtc.now();
 
     int h = dht.readHumidity();  //влажность
     int t = dht.readTemperature();  //температура
@@ -121,7 +130,19 @@ void loop() {
     lcd.print(h);
     lcd.print(" % ");
     lcd.write(icon(h, 2));
-    lcd.setCursor(15, 3 - line);
+    lcd.setCursor(0, 3 - line);
+    lcd.print(now.day(), DEC);
+    lcd.print(" ");
+    lcd.print(daysOfTheWeek[now.dayOfTheWeek()]);
+    lcd.print(" ");
+    lcd.print(now.hour(), DEC);
+    lcd.print(':');
+    lcd.print(now.minute(), DEC);
+    lcd.print(" ");
+    lcd.print(now.month(), DEC);
+    lcd.print('/');
+    lcd.print(now.year(), DEC);
+    lcd.setCursor(15, 2 - line);
     lcd.print(VERSION);
     //добавляет строкам смещение
     if (line == 0) {
