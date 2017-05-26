@@ -13,6 +13,7 @@
 > последняя требует доп. библиотеку - [Adafruit Unified Sensor Driver](https://github.com/adafruit/Adafruit_Sensor), доступна в 
 **диспетчере библиотек Arduino IDE**  
 > ![Arduino IDE](https://cdn-learn.adafruit.com/assets/assets/000/038/115/medium800/weather_Screen_Shot_2016-12-26_at_12.52.24.png?1482753413)
+
 [Adafruit RTClib](https://github.com/adafruit/RTClib/)
 ### Макетная схема:  
 ![Breadboard1](https://github.com/djhumster/Meteostation/blob/master/Meteostation_bb.png?raw=true)
