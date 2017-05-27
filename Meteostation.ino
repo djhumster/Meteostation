@@ -58,6 +58,17 @@ byte humi_ico[8] = {
   B10001,
   B01110
 };
+// знак барометр
+byte bar_ico[8] = {
+  B00100,
+  B01010,
+  B01010,
+  B01010,
+  B01010,
+  B10001,
+  B11111,
+  B01110
+};
 // знак Цельсия
 byte degree[8] = {
   B00011,
@@ -124,6 +135,7 @@ void setup() {
   lcd.createChar(3, arrowDown);
   lcd.createChar(4, temp_ico);
   lcd.createChar(5, humi_ico);
+  lcd.createChar(6, bar_ico);
 
   Serial.println("DHT start...");
   dht.begin(); //  инициальзация датчика влажности
@@ -178,7 +190,7 @@ void loop() {
       Serial.println("ERROR while reading from DHT sensor");
       return;
     }
-    // убрать line, если НЕ нужно перемещать строки
+
     lcd.setCursor(0, 0);
     lcd.write((byte)4);
     lcd.print(" ");
@@ -194,6 +206,9 @@ void loop() {
     lcd.print(h);
     lcd.print(" % ");
     lcd.write(icon(h, 2));
+    lcd.print(" ");
+    lcd.write((byte)6);
+    lcd.print(" 123 mm");
 
     h_prev = h;
     t_prev = t;
