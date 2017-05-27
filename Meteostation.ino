@@ -83,7 +83,8 @@ byte arrowDown[8] = {
 
 unsigned long last_time = 0; // время для задержки
 
-int h_prev, t_prev; //  предыдущие значения температуры и влажности
+byte h_prev;  //  предыдущие значения температуры и влажности
+int t_prev;
 
 char daysOfTheWeek[7][12] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
@@ -119,7 +120,7 @@ void loop() {
 
     DateTime now = rtc.now();
     
-    int h = dht.readHumidity();  //влажность
+    byte h = dht.readHumidity();  //влажность
     int t = dht.readTemperature();  //температура
 
     if (isnan(h) || isnan(t)) {
