@@ -27,7 +27,7 @@
 */
 #define DHTPIN 2 // пин микроконтроллера к которому подключен DHT11/DHT22
 
-const String VERSION = "v0.4"; //  версия кода
+const String VERSION = "v0.4d"; //  версия кода
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -36,6 +36,28 @@ LiquidCrystal_I2C lcd(0x3F, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
 RTC_DS1307 rtc;
 
+//  знак температуры
+byte temp_ico[8] = {
+  B00100,
+  B01010,
+  B01010,
+  B01110,
+  B01110,
+  B11111,
+  B11111,
+  B01110
+};
+//  знак влажности
+byte humi_ico[8] = {
+  B00100,
+  B00100,
+  B01010,
+  B01010,
+  B10001,
+  B10001,
+  B10001,
+  B01110
+};
 // знак Цельсия
 byte degree[8] = {
   B00011,
@@ -100,6 +122,8 @@ void setup() {
   lcd.createChar(1, dash);
   lcd.createChar(2, arrowUp);
   lcd.createChar(3, arrowDown);
+  lcd.createChar(4, temp_ico);
+  lcd.createChar(5, humi_ico);
 
   Serial.println("DHT start...");
   dht.begin(); //  инициальзация датчика влажности
@@ -156,14 +180,16 @@ void loop() {
     }
     // убрать line, если НЕ нужно перемещать строки
     lcd.setCursor(0, 0);
-    lcd.print("Temp: ");
+    lcd.write((byte)4);
+    lcd.print(" ");
     add_zero(t);
     lcd.print(t);
     lcd.write((byte)0);
     lcd.print("C ");
     lcd.write(icon(t, 1));
     lcd.setCursor(0, 1);
-    lcd.print("Humi: ");
+    lcd.write((byte)5);
+    lcd.print(" ");
     add_zero(h);
     lcd.print(h);
     lcd.print(" % ");
