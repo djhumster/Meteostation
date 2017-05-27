@@ -27,7 +27,7 @@
 */
 #define DHTPIN 2 // пин микроконтроллера к которому подключен DHT11/DHT22
 
-const String VERSION = "v0.3d"; //  версия кода
+const String VERSION = "v0.4"; //  версия кода
 
 DHT dht(DHTPIN, DHTTYPE);
 
