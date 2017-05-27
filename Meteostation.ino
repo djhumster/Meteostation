@@ -82,6 +82,7 @@ byte arrowDown[8] = {
 };
 
 unsigned long last_time = 0; // время для задержки
+unsigned long last_time2 = 0;
 
 byte h_prev;  //  предыдущие значения температуры и влажности
 int t_prev;
@@ -112,14 +113,38 @@ void setup() {
   rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); //  прописывает в RTC время компиляции скетча
 
   Serial.println("Complete!");
+  lcd.setCursor(15, 0);
+  lcd.print(VERSION);
 }
 
 void loop() {
-  if (millis() - last_time > 10000) {
-    last_time = millis() - 1;
+  // --- ЧАСЫ ---
+  if (millis() - last_time2 > 2000) {
+    last_time2 = millis() - 1;
 
     DateTime now = rtc.now();
-    
+
+    lcd.setCursor(0, 3);
+    add_zero(now.day());
+    lcd.print(now.day(), DEC);
+    lcd.print(" ");
+    lcd.print(daysOfTheWeek[now.dayOfTheWeek()]);
+    lcd.print(" ");
+    add_zero(now.hour());
+    lcd.print(now.hour(), DEC);
+    lcd.print(':');
+    add_zero(now.minute());
+    lcd.print(now.minute(), DEC);
+    lcd.print(" ");
+    add_zero(now.month());
+    lcd.print(now.month(), DEC);
+    lcd.print('/');
+    lcd.print(now.year(), DEC);
+  }
+  // --- МЕТЕОСТАНЦИЯ ---
+  if (millis() - last_time > 60000) {
+    last_time = millis() - 1;
+
     byte h = dht.readHumidity();  //влажность
     int t = dht.readTemperature();  //температура
 
@@ -143,29 +168,12 @@ void loop() {
     lcd.print(h);
     lcd.print(" % ");
     lcd.write(icon(h, 2));
-    lcd.setCursor(0, 3);
-    add_zero(now.day());
-    lcd.print(now.day(), DEC);
-    lcd.print(" ");
-    lcd.print(daysOfTheWeek[now.dayOfTheWeek()]);
-    lcd.print(" ");
-    add_zero(now.hour());
-    lcd.print(now.hour(), DEC);
-    lcd.print(':');
-    add_zero(now.minute());
-    lcd.print(now.minute(), DEC);
-    lcd.print(" ");
-    add_zero(now.month());
-    lcd.print(now.month(), DEC);
-    lcd.print('/');
-    lcd.print(now.year(), DEC);
-    lcd.setCursor(15, 0);
-    lcd.print(VERSION);
 
     h_prev = h;
     t_prev = t;
   }
 }
+// --- ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ---
 /*
   функция выбора иконки изменения состояния температры/влажности
 */
@@ -203,7 +211,7 @@ byte icon(int i_cur, byte mode) {
    функция добавления 0 перед однозначным числом
 */
 void add_zero(int i) {
-    if (i < 10) {
-      lcd.print(0);
-    }
+  if (i < 10) {
+    lcd.print(0);
+  }
 }
