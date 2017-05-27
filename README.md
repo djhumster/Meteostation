@@ -1,4 +1,5 @@
 # Meteostation
+![Прототип](https://github.com/djhumster/Meteostation/blob/master/proto.JPG?raw=true)
 ### Компоненты:  
 |Кол-во|Наименование|
 |------|------|
