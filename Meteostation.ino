@@ -3,14 +3,14 @@
     Метеостанция
     Требуются библиотеки:
     http://arduino-info.wikispaces.com/LCD-Blue-I2C
-    https://learn.adafruit.com/dht
+    https://learn.adafruit.com/dht требует доп. библиотеку, ВНИМАТЕЛЬНО читать ман
     https://github.com/adafruit/RTClib
-    последняя требует доп. библиотеку, ВНИМАТЕЛЬНО читать мануал.
+    https://github.com/mathertel/OneButton
 */
 #include <DHT.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-#include "RTClib.h"
+#include <RTClib.h>
 
 // задаем тип датчика влажности
 //#define DHTTYPE DHT22
@@ -141,12 +141,15 @@ void setup() {
   dht.begin(); //  инициальзация датчика влажности
 
   Serial.println("RTC start...");
-  rtc.begin(); // инициализация часов
-  if (!rtc.isrunning()) {
-    Serial.println("RTC not started!");
+  // инициализация часов
+  if (!rtc.begin()) {
+    Serial.println("Couldn't find RTC");
     while (1);
   }
-  rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); //  прописывает в RTC время компиляции скетча
+  if (!rtc.isrunning()) {
+    Serial.println("RTC not running!");
+    rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); //  прописывает в RTC время компиляции скетча
+  }
 
   Serial.println("Complete!");
   lcd.setCursor(15, 0);
@@ -154,66 +157,72 @@ void setup() {
 }
 
 void loop() {
-  // --- ЧАСЫ ---
   if (millis() - last_time2 > 2000) {
-    last_time2 = millis() - 1;
-
-    DateTime now = rtc.now();
-
-    lcd.setCursor(0, 3);
-    add_zero(now.day());
-    lcd.print(now.day(), DEC);
-    lcd.print(" ");
-    lcd.print(daysOfTheWeek[now.dayOfTheWeek()]);
-    lcd.print(" ");
-    add_zero(now.hour());
-    lcd.print(now.hour(), DEC);
-    lcd.print(':');
-    add_zero(now.minute());
-    lcd.print(now.minute(), DEC);
-    lcd.print(" ");
-    add_zero(now.month());
-    lcd.print(now.month(), DEC);
-    lcd.print('/');
-    lcd.print(now.year(), DEC);
+    last_time2 = millis();
+    my_clock(); //  отображение времени
   }
-  // --- МЕТЕОСТАНЦИЯ ---
   if (millis() - last_time > 60000) {
-    last_time = millis() - 1;
-
-    byte h = dht.readHumidity();  //влажность
-    int t = dht.readTemperature();  //температура
-
-    if (isnan(h) || isnan(t)) {
-      lcd.home();
-      lcd.print("Failed!");
-      Serial.println("ERROR while reading from DHT sensor");
-      return;
-    }
-
-    lcd.setCursor(0, 0);
-    lcd.write((byte)4);
-    lcd.print(" ");
-    add_zero(t);
-    lcd.print(t);
-    lcd.write((byte)0);
-    lcd.print("C ");
-    lcd.write(icon(t, 1));
-    lcd.setCursor(0, 1);
-    lcd.write((byte)5);
-    lcd.print(" ");
-    add_zero(h);
-    lcd.print(h);
-    lcd.print(" % ");
-    lcd.write(icon(h, 2));
-    lcd.print(" ");
-    lcd.write((byte)6);
-    lcd.print(" 123 mm");
-
-    h_prev = h;
-    t_prev = t;
+    last_time = millis();
+    weather();  // метеофстанция
   }
 }
+
+// --- МЕТЕОСТАНЦИЯ ---
+void weather() {
+  byte h = dht.readHumidity();  //влажность
+  int t = dht.readTemperature();  //температура
+
+  if (isnan(h) || isnan(t)) {
+    lcd.home();
+    lcd.print("Failed!");
+    Serial.println("ERROR while reading from DHT sensor");
+    return;
+  }
+
+  lcd.setCursor(0, 0);
+  lcd.write((byte)4);
+  lcd.print(" ");
+  add_zero(t);
+  lcd.print(t);
+  lcd.write((byte)0);
+  lcd.print("C ");
+  lcd.write(icon(t, 1));
+  lcd.setCursor(0, 1);
+  lcd.write((byte)5);
+  lcd.print(" ");
+  add_zero(h);
+  lcd.print(h);
+  lcd.print(" % ");
+  lcd.write(icon(h, 2));
+  lcd.print(" ");
+  lcd.write((byte)6);
+  lcd.print(" 123 mm");
+
+  h_prev = h;
+  t_prev = t;
+}
+// --- ЧАСЫ ---
+void my_clock() {
+  DateTime now = rtc.now();
+
+  lcd.setCursor(0, 3);
+  add_zero(now.day());
+  lcd.print(now.day(), DEC);
+  lcd.print(" ");
+  lcd.print(daysOfTheWeek[now.dayOfTheWeek()]);
+  lcd.print(" ");
+  add_zero(now.hour());
+  lcd.print(now.hour(), DEC);
+  lcd.print(':');
+  add_zero(now.minute());
+  lcd.print(now.minute(), DEC);
+  lcd.print(" ");
+  add_zero(now.month());
+  lcd.print(now.month(), DEC);
+  lcd.print('/');
+  lcd.print(now.year(), DEC);
+}
+
 // --- ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ---
 /*
   функция выбора иконки изменения состояния температры/влажности
@@ -252,7 +261,7 @@ byte icon(int i_cur, byte mode) {
    функция добавления 0 перед однозначным числом
 */
 void add_zero(int i) {
-  if (i < 10) {
+  if (i > -10 && i < 10) {
     lcd.print(0);
   }
 }
