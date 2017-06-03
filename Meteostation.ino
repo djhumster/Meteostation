@@ -39,85 +39,26 @@ LiquidCrystal_I2C lcd(0x3F, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
 RTC_DS1307 rtc;
 
-OneButton menu_btn(MENU_BTN_PIN, true);  // кнопка меню
+OneButton menu_btn(MENU_BTN_PIN, true);  // кнопка меню, параметр true для INPUT_PULLUP
 OneButton up_btn(UP_BTN_PIN, true);  //  кнопка "+" увеличения значений
 
-//  знак температуры
-byte temp_ico[8] = {
-  B00100,
-  B01010,
-  B01010,
-  B01110,
-  B01110,
-  B11111,
-  B11111,
-  B01110
-};
-//  знак влажности
-byte humi_ico[8] = {
-  B00100,
-  B00100,
-  B01010,
-  B01010,
-  B10001,
-  B10001,
-  B10001,
-  B01110
-};
-// знак барометр
-byte bar_ico[8] = {
-  B01110,
-  B01010,
-  B01010,
-  B01010,
-  B01010,
-  B10001,
-  B11111,
-  B01110
-};
-// знак Цельсия
-byte degree[8] = {
-  B00011,
-  B00011,
-  B00000,
-  B00000,
-  B00000,
-  B00000,
-  B00000,
-  B00000
-};
-// тире
-byte dash[8] = {
-  B00000,
-  B00000,
-  B00000,
-  B11111,
-  B11111,
-  B00000,
-  B00000,
-  B00000
-};
-// стрелки вверх
-byte arrowUp[8] = {
-  B00000,
-  B00100,
-  B01110,
-  B11111,
-  B00000,
-  B00100,
-  B01110,
-  B11111
-};
-// стрелки вниз
-byte arrowDown[8] = {
-  B00000,
-  B11111,
-  B01110,
-  B00100,
-  B00000,
-  B11111,
-  B01110,
-  B00100
+const byte charBitmap[][8] {
+  //  знак температуры
+  {B00100, B01010, B01010, B01110, B01110, B11111, B11111, B01110},
+  //  знак влажности
+  {B00100, B00100, B01010, B01010, B10001, B10001, B10001, B01110},
+  // знак барометр
+  {B01110, B01010, B01010, B01010, B01010, B10001, B11111, B01110},
+  // знак Цельсия
+  {B00011, B00011, B00000, B00000, B00000, B00000, B00000, B00000},
+  // тире
+  {B00000, B00000, B00000, B11111, B11111, B00000, B00000, B00000},
+  // стрелки вверх
+  {B00000, B00100, B01110, B11111, B00000, B00100, B01110, B11111},
+  // стрелки вниз
+  {B00000, B11111, B01110, B00100, B00000, B11111, B01110, B00100},
+  //  призрак
+  {B00000, B01110, B11111, B10101, B11111, B11111, B10101, B00000}
 };
 
 boolean light = 1;  //  состояние подсветки экрана, в перспективе и другой подсветки
@@ -140,13 +81,12 @@ void setup() {
   lcd.begin(20, 4);  // инициальзация экрана и включение подсветки
   lcd.backlight();
   lcd.clear();
-  lcd.createChar(0, degree);  //  записываем символы в память экрана
-  lcd.createChar(1, dash);
-  lcd.createChar(2, arrowUp);
-  lcd.createChar(3, arrowDown);
-  lcd.createChar(4, temp_ico);
-  lcd.createChar(5, humi_ico);
-  lcd.createChar(6, bar_ico);
+  //  записываем символы в память экрана
+  int charBitmapSize = (sizeof(charBitmap ) / sizeof (charBitmap[0]));
+  for ( int i = 0; i < charBitmapSize; i++ )
+  {
+    lcd.createChar ( i, (byte *)charBitmap[i] );
+  }
 
   Serial.println("DHT start...");
   dht.begin(); //  инициальзация датчика влажности
@@ -186,13 +126,13 @@ void loop() {
   menu_btn.tick();
   up_btn.tick();
 
-  if ((menu_mode == 0) && (millis() - last_time2 > 2000)) {
+  if ((menu_mode == 0) && (millis() - last_time2 > 1000)) {
     last_time2 = millis();
     my_clock(); //  отображение времени
   }
   if ((menu_mode == 0) && (millis() - last_time > 60000)) {
     last_time = millis();
-    weather();  // метеофстанция
+    weather();  // метеостанция
   }
 }
 
@@ -212,22 +152,22 @@ void weather() {
   }
 
   lcd.setCursor(0, 0);
-  lcd.write((byte)4);
+  lcd.write((byte)0);
   lcd.print(" ");
   add_zero(t);
   lcd.print(t);
-  lcd.write((byte)0);
+  lcd.write((byte)3);
   lcd.print("C ");
   lcd.write(icon(t, 1));
   lcd.setCursor(0, 1);
-  lcd.write((byte)5);
+  lcd.write((byte)1);
   lcd.print(" ");
   add_zero(h);
   lcd.print(h);
   lcd.print(" % ");
   lcd.write(icon(h, 2));
   lcd.print(" ");
-  lcd.write((byte)6);
+  lcd.write((byte)2);
   lcd.print(" 123 mm");
 
   h_prev = h;
@@ -245,7 +185,12 @@ void my_clock() {
   lcd.print(" ");
   add_zero(now.hour());
   lcd.print(now.hour(), DEC);
-  lcd.print(':');
+  //  мигаем разделителем часов и минут
+  if (now.second() & 1) {
+    lcd.print(':');
+  } else {
+    lcd.print(' ');
+  }
   add_zero(now.minute());
   lcd.print(now.minute(), DEC);
   lcd.print(" ");
@@ -403,26 +348,26 @@ byte icon(int i, byte mode) {
     // режим выбора иконки температуры
     case 1: {
         if (t_prev == i) {
-          return 1;
+          return 4;
         }
         if (t_prev < i) {
-          return 2;
+          return 5;
         }
         if (t_prev > i) {
-          return 3;
+          return 6;
         }
       }
       break;
     // режим выбора иконки влажности
     case 2: {
         if (h_prev == i) {
-          return 1;
+          return 4;
         }
         if (h_prev < i) {
-          return 2;
+          return 5;
         }
         if (h_prev > i) {
-          return 3;
+          return 6;
         }
       }
       break;
