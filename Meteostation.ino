@@ -169,7 +169,7 @@ void setup() {
       длинный клик - выход из меню, без сохранения изменений
      Кнопка "+":
       клик - в меню уввеличивает значение
-      двойной клик - вкл/выкл подсветку экрана (везде)
+      двойной клик - вкл/выкл подсветку экрана (вне меню)
   */
   menu_btn.attachClick(m_click);
   menu_btn.attachDoubleClick(m_double_click);
@@ -383,12 +383,14 @@ void menu() {
 }
 
 void up_double_click() {
-  if (light) {
-    lcd.noBacklight();
-    light = 0;
-  } else {
-    lcd.backlight();
-    light = 1;
+  if (menu_mode == 0) {
+    if (light) {
+      lcd.noBacklight();
+      light = 0;
+    } else {
+      lcd.backlight();
+      light = 1;
+    }
   }
 }
 
