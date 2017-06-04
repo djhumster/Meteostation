@@ -71,6 +71,11 @@ byte menu_mode = 0;
 tmElements_t tmE; //  адский формат даты/времени
 AlarmId id, id2;  // идентификаторы для таймеров
 
+/*
+   программная перезагрузка, reset с адресом 0
+*/
+void(* soft_reset) (void) = 0;
+
 void setup() {
   Serial.begin(9600);
   Serial.println("LCD start...");
@@ -123,6 +128,7 @@ void setup() {
 
   id = Alarm.timerRepeat(1, my_clock);
   id2 = Alarm.timerRepeat(60, weather);
+  Alarm.alarmRepeat(dowSunday, 21, 27, 0, soft_reset);
 }
 
 void loop() {
@@ -215,12 +221,12 @@ void m_double_click() {
   } else {
     RTC.write(tmE);
     setTime(tmE.Hour, tmE.Minute, tmE.Second, tmE.Day, tmE.Month, tmYearToCalendar(tmE.Year));
-    
+
     lcd.clear();
-    
+
     Alarm.enable(id);
     Alarm.enable(id2);
-    
+
     menu_mode = 0;
     weather();
   }
@@ -402,7 +408,7 @@ byte icon(int i, byte mode) {
   }
 }
 /*
-   функция добавления 0 перед однозначным числом
+  функция добавления 0 перед однозначным числом
 */
 void two_digits(int i) {
   if (i > -10 && i < 10) {
