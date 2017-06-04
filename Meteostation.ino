@@ -4,13 +4,15 @@
     Требуются библиотеки:
     http://arduino-info.wikispaces.com/LCD-Blue-I2C
     https://learn.adafruit.com/dht требует доп. библиотеку, ВНИМАТЕЛЬНО читать ман
-    https://github.com/adafruit/RTClib
+  !!!    https://github.com/adafruit/RTClib
     https://github.com/mathertel/OneButton
 */
-#include <DHT.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
-#include <RTClib.h>
+#include <TimeLib.h>
+#include <TimeAlarms.h>
+#include <DS1307RTC.h>
+#include <DHT.h>
 #include <OneButton.h>
 
 // задаем тип датчика влажности
@@ -37,8 +39,6 @@ DHT dht(DHTPIN, DHTTYPE);
 // адрес i2c экрана как правило 0x27 или 0x3F
 LiquidCrystal_I2C lcd(0x3F, 2, 1, 0, 4, 5, 6, 7, 3, POSITIVE);
 
-RTC_DS1307 rtc;
-
 OneButton menu_btn(MENU_BTN_PIN, true);  // кнопка меню, параметр true для INPUT_PULLUP
 OneButton up_btn(UP_BTN_PIN, true);  //  кнопка "+" увеличения значений
 
@@ -63,16 +63,13 @@ const byte charBitmap[][8] {
 
 boolean light = 1;  //  состояние подсветки экрана, в перспективе и другой подсветки
 
-unsigned long last_time = 0; // время для задержки
-unsigned long last_time2 = 0;
-
 byte h_prev;  //  предыдущие значения температуры и влажности
 int t_prev;
 
-char daysOfTheWeek[7][12] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 //  переменные для меню и ручного выбора даты/времени
-byte menu_mode = 0, set_hour = 0, set_minute = 0, set_day = 1, set_month = 1;
-int set_year = 1970;
+byte menu_mode = 0;
+tmElements_t tmE; //  адский формат даты/времени
+AlarmId id, id2;  // идентификаторы для таймеров
 
 void setup() {
   Serial.begin(9600);
@@ -91,25 +88,29 @@ void setup() {
   Serial.println("DHT start...");
   dht.begin(); //  инициальзация датчика влажности
 
-  Serial.println("RTC start...");
-  // инициализация часов
-  if (!rtc.begin()) {
-    Serial.println("Couldn't find RTC");
-    while (1);
-  }
-  if (!rtc.isrunning()) {
-    Serial.println("RTC not running!");
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__))); //  прописывает в RTC время компиляции скетча
+  setSyncProvider(RTC.get); //  синхронизация времени с RTC
+
+  switch (timeStatus()) {
+    case timeSet: Serial.println("RTC has set the system time");
+      break;
+    case timeNeedsSync: Serial.println("Time set, but unable to sync with the RTC");
+      break;
+    case timeNotSet:
+      Serial.println("Time didn't set yet");
+      Serial.println("Setting default time");
+      setTime(1, 0, 0, 1, 1, 2017);
+      break;
   }
   /*
      подключаем функции кнопок
      Кнопка МЕНЮ:
-      клик - меняет страницы меню
+      клик (в меню) - меняет страницы меню
       двойной клик - включает/выключает меню с сохранением изменений
-      длинный клик - выход из меню, без сохранения изменений
+      длинный клик (в меню) - выход из меню, без сохранения изменений
      Кнопка "+":
-      клик - в меню уввеличивает значение
-      двойной клик - вкл/выкл подсветку экрана (вне меню)
+      клик (в меню) - +1 к значение
+      двойной клик (вне меню) - вкл/выкл подсветку экрана
+      двойной клик (в меню) - +5 к значению, -1 для года
   */
   menu_btn.attachClick(m_click);
   menu_btn.attachDoubleClick(m_double_click);
@@ -119,21 +120,16 @@ void setup() {
   up_btn.attachDoubleClick(up_double_click);
 
   Serial.println("Complete!");
+
+  id = Alarm.timerRepeat(1, my_clock);
+  id2 = Alarm.timerRepeat(60, weather);
 }
 
 void loop() {
   //  отслеживаем нажатия кнопок
   menu_btn.tick();
   up_btn.tick();
-
-  if ((menu_mode == 0) && (millis() - last_time2 > 1000)) {
-    last_time2 = millis();
-    my_clock(); //  отображение времени
-  }
-  if ((menu_mode == 0) && (millis() - last_time > 60000)) {
-    last_time = millis();
-    weather();  // метеостанция
-  }
+  Alarm.delay(10);
 }
 
 // --- МЕТЕОСТАНЦИЯ ---
@@ -151,53 +147,47 @@ void weather() {
     return;
   }
 
-  lcd.setCursor(0, 0);
+  lcd.home();
   lcd.write((byte)0);
   lcd.print(" ");
-  add_zero(t);
-  lcd.print(t);
+  two_digits(t);
   lcd.write((byte)3);
   lcd.print("C ");
   lcd.write(icon(t, 1));
   lcd.setCursor(0, 1);
   lcd.write((byte)1);
   lcd.print(" ");
-  add_zero(h);
-  lcd.print(h);
+  two_digits(h);
   lcd.print(" % ");
   lcd.write(icon(h, 2));
   lcd.print(" ");
   lcd.write((byte)2);
-  lcd.print(" 123 mm");
+  lcd.print(" --- mm");
 
   h_prev = h;
   t_prev = t;
 }
 // --- ЧАСЫ ---
 void my_clock() {
-  DateTime now = rtc.now();
+  time_t tm = now();
 
   lcd.setCursor(0, 3);
-  add_zero(now.day());
-  lcd.print(now.day(), DEC);
+  two_digits(day(tm));
   lcd.print(" ");
-  lcd.print(daysOfTheWeek[now.dayOfTheWeek()]);
+  lcd.print(dayShortStr(weekday()));
   lcd.print(" ");
-  add_zero(now.hour());
-  lcd.print(now.hour(), DEC);
+  two_digits(hour(tm));
   //  мигаем разделителем часов и минут
-  if (now.second() & 1) {
+  if (second(tm) & 1) {
     lcd.print(':');
   } else {
     lcd.print(' ');
   }
-  add_zero(now.minute());
-  lcd.print(now.minute(), DEC);
+  two_digits(minute(tm));
   lcd.print(" ");
-  add_zero(now.month());
-  lcd.print(now.month(), DEC);
+  two_digits(month(tm));
   lcd.print('/');
-  lcd.print(now.year(), DEC);
+  lcd.print(year(tm));
 }
 // --- МЕНЮ И КНОПКИ ---
 void m_click() {
@@ -215,19 +205,24 @@ void m_double_click() {
   if (menu_mode == 0) {
     menu_mode = 1;
 
-    DateTime now = rtc.now();
+    Alarm.disable(id);
+    Alarm.disable(id2);
 
-    set_hour = now.hour();
-    set_minute = now.minute();
-    set_day = now.day();
-    set_month = now.month();
-    set_year = now.year();
+    time_t tm = now();
+    breakTime(tm, tmE);
 
     menu();
   } else {
-    rtc.adjust(DateTime(set_year, set_month, set_day, set_hour, set_minute, 0));
+    RTC.write(tmE);
+    setTime(tmE.Hour, tmE.Minute, tmE.Second, tmE.Day, tmE.Month, tmYearToCalendar(tmE.Year));
+    
     lcd.clear();
+    
+    Alarm.enable(id);
+    Alarm.enable(id2);
+    
     menu_mode = 0;
+    weather();
   }
 }
 
@@ -242,7 +237,10 @@ void m_long_press_start() {
 void m_long_press_stop() {
   if (menu_mode > 0) {
     lcd.clear();
+    Alarm.enable(id);
+    Alarm.enable(id2);
     menu_mode = 0;
+    weather();
   }
 }
 //  кнопка "+" увеличивает звначения в зависимости от выбранного пункта меню
@@ -250,34 +248,34 @@ void up_click() {
   if (menu_mode > 0) {
     switch (menu_mode) {
       case 1:
-        if (set_hour < 23) {
-          set_hour++;
+        if (tmE.Hour < 23 ) {
+          tmE.Hour++;
         } else {
-          set_hour = 0;
+          tmE.Hour = 0;
         }
         break;
       case 2:
-        if (set_minute < 59 ) {
-          set_minute++;
+        if (tmE.Minute < 59 ) {
+          tmE.Minute++;
         } else {
-          set_minute = 0;
+          tmE.Minute = 0;
         }
         break;
       case 3:
-        if (set_day < 31) {
-          set_day++;
+        if (tmE.Day < 31) {
+          tmE.Day++;
         } else {
-          set_day = 1;
+          tmE.Day = 1;
         }
         break;
       case 4:
-        if (set_month < 12) {
-          set_month++;
+        if (tmE.Month < 12) {
+          tmE.Month++;
         } else {
-          set_month = 1;
+          tmE.Month = 1;
         }
         break;
-      case 5: set_year++;
+      case 5: tmE.Year++;
         break;
     }
     menu();
@@ -294,27 +292,23 @@ void menu() {
   switch (menu_mode) {
     case 1:
       lcd.print("Hour: ");
-      add_zero(set_hour);
-      lcd.print(set_hour);
+      two_digits(tmE.Hour);
       break;
     case 2:
       lcd.print("Minute: ");
-      add_zero(set_minute);
-      lcd.print(set_minute);
+      two_digits(tmE.Minute);
       break;
     case 3:
       lcd.print("Day: ");
-      add_zero(set_day);
-      lcd.print(set_day);
+      two_digits(tmE.Day);
       break;
     case 4:
       lcd.print("Month: ");
-      add_zero(set_month);
-      lcd.print(set_month);
+      two_digits(tmE.Month);
       break;
     case 5:
       lcd.print("Year: ");
-      lcd.print(set_year);
+      lcd.print(tmYearToCalendar(tmE.Year));
       break;
     default:
       lcd.setCursor(0, 1);
@@ -328,16 +322,50 @@ void menu() {
 }
 
 void up_double_click() {
-  if (menu_mode == 0) {
-    if (light) {
-      lcd.noBacklight();
-      light = 0;
-    } else {
-      lcd.backlight();
-      light = 1;
-    }
+  switch (menu_mode) {
+    case 0:
+      if (light) {
+        lcd.noBacklight();
+        light = 0;
+      } else {
+        lcd.backlight();
+        light = 1;
+      }
+      return;
+    case 1:
+      if (tmE.Hour < 23 ) {
+        tmE.Hour += 5;
+      } else {
+        tmE.Hour = 0;
+      }
+      break;
+    case 2:
+      if (tmE.Minute < 59 ) {
+        tmE.Minute += 5;
+      } else {
+        tmE.Minute = 0;
+      }
+      break;
+    case 3:
+      if (tmE.Day < 31) {
+        tmE.Day += 5;
+      } else {
+        tmE.Day = 1;
+      }
+      break;
+    case 4:
+      if (tmE.Month < 12) {
+        tmE.Month += 5;
+      } else {
+        tmE.Month = 1;
+      }
+      break;
+    case 5: tmE.Year--;
+      break;
   }
+  menu();
 }
+
 
 // --- ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ---
 /*
@@ -376,8 +404,9 @@ byte icon(int i, byte mode) {
 /*
    функция добавления 0 перед однозначным числом
 */
-void add_zero(int i) {
+void two_digits(int i) {
   if (i > -10 && i < 10) {
     lcd.print(0);
   }
+  lcd.print(i);
 }
