@@ -10,7 +10,6 @@
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <TimeLib.h>
-#include <TimeAlarms.h>
 #include <DS1307RTC.h>
 #include <DHT.h>
 #include <OneButton.h>
@@ -69,12 +68,9 @@ int t_prev;
 //  переменные для меню и ручного выбора даты/времени
 byte menu_mode = 0;
 tmElements_t tmE; //  адский формат даты/времени
-AlarmId id, id2;  // идентификаторы для таймеров
 
-/*
-   программная перезагрузка, reset с адресом 0
-*/
-void(* soft_reset) (void) = 0;
+//  для таймеров
+unsigned long ltm1, ltm2;
 
 void setup() {
   Serial.begin(9600);
@@ -125,17 +121,21 @@ void setup() {
   up_btn.attachDoubleClick(up_double_click);
 
   Serial.println("Complete!");
-
-  id = Alarm.timerRepeat(1, my_clock);
-  id2 = Alarm.timerRepeat(60, weather);
-  Alarm.alarmRepeat(dowSunday, 21, 27, 0, soft_reset);
 }
 
 void loop() {
   //  отслеживаем нажатия кнопок
   menu_btn.tick();
   up_btn.tick();
-  Alarm.delay(10);
+
+  if (menu_mode == 0 && ltm1 - millis() >= 1000) {
+    ltm1 = millis();
+    my_clock();
+  }
+  if (menu_mode == 0 && ltm2 - millis() >= 60000) {
+    ltm2 = millis();
+    weather();
+  }
 }
 
 // --- МЕТЕОСТАНЦИЯ ---
@@ -210,25 +210,15 @@ void m_click() {
 void m_double_click() {
   if (menu_mode == 0) {
     menu_mode = 1;
-
-    Alarm.disable(id);
-    Alarm.disable(id2);
-
     time_t tm = now();
     breakTime(tm, tmE);
-
     menu();
   } else {
+    tmE.Second = 0;
     RTC.write(tmE);
     setTime(tmE.Hour, tmE.Minute, tmE.Second, tmE.Day, tmE.Month, tmYearToCalendar(tmE.Year));
-
     lcd.clear();
-
-    Alarm.enable(id);
-    Alarm.enable(id2);
-
     menu_mode = 0;
-    weather();
   }
 }
 
@@ -243,8 +233,6 @@ void m_long_press_start() {
 void m_long_press_stop() {
   if (menu_mode > 0) {
     lcd.clear();
-    Alarm.enable(id);
-    Alarm.enable(id2);
     menu_mode = 0;
     weather();
   }
@@ -371,8 +359,6 @@ void up_double_click() {
   }
   menu();
 }
-
-
 // --- ДОПОЛНИТЕЛЬНЫЕ ФУНКЦИИ ---
 /*
   функция выбора иконки изменения состояния температры/влажности
