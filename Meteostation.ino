@@ -128,11 +128,11 @@ void loop() {
   menu_btn.tick();
   up_btn.tick();
 
-  if (menu_mode == 0 && ltm1 - millis() >= 1000) {
+  if (menu_mode == 0 && millis() - ltm1 >= 1000) {
     ltm1 = millis();
     my_clock();
   }
-  if (menu_mode == 0 && ltm2 - millis() >= 60000) {
+  if (menu_mode == 0 && millis() - ltm2 >= 60000) {
     ltm2 = millis();
     weather();
   }
