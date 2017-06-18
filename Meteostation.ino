@@ -3,9 +3,15 @@
     Метеостанция
     Требуются библиотеки:
     http://arduino-info.wikispaces.com/LCD-Blue-I2C
+
     https://learn.adafruit.com/dht требует доп. библиотеку, ВНИМАТЕЛЬНО читать ман
-  !!!    https://github.com/adafruit/RTClib
-    https://github.com/mathertel/OneButton
+
+    https://playground.arduino.cc/Code/Time
+      Time - библиотека времени
+      DS1307RTC - библиотека для модуля DS1307/DS1337/DS3231
+      TimeAlarms (сейчас не используется) - можно добавить будильники/таймеры событий
+
+    https://github.com/mathertel/OneButton для работы с кнопками
 */
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
@@ -240,39 +246,22 @@ void m_long_press_stop() {
 //  кнопка "+" увеличивает звначения в зависимости от выбранного пункта меню
 void up_click() {
   if (menu_mode > 0) {
-    switch (menu_mode) {
-      case 1:
-        if (tmE.Hour < 23 ) {
-          tmE.Hour++;
-        } else {
-          tmE.Hour = 0;
-        }
-        break;
-      case 2:
-        if (tmE.Minute < 59 ) {
-          tmE.Minute++;
-        } else {
-          tmE.Minute = 0;
-        }
-        break;
-      case 3:
-        if (tmE.Day < 31) {
-          tmE.Day++;
-        } else {
-          tmE.Day = 1;
-        }
-        break;
-      case 4:
-        if (tmE.Month < 12) {
-          tmE.Month++;
-        } else {
-          tmE.Month = 1;
-        }
-        break;
-      case 5: tmE.Year++;
-        break;
+    increase(1);
+  }
+}
+
+void up_double_click() {
+  if (menu_mode != 0) {
+    increase(5);
+  } else {
+    if (light) {
+      lcd.noBacklight();
+      light = 0;
+    } else {
+      lcd.backlight();
+      light = 1;
     }
-    menu();
+    return;
   }
 }
 //  отрисовка меню
@@ -314,47 +303,43 @@ void menu() {
       break;
   }
 }
-
-void up_double_click() {
+// Увеличение значений в меню
+void increase (int i) {
   switch (menu_mode) {
-    case 0:
-      if (light) {
-        lcd.noBacklight();
-        light = 0;
-      } else {
-        lcd.backlight();
-        light = 1;
-      }
-      return;
     case 1:
       if (tmE.Hour < 23 ) {
-        tmE.Hour += 5;
+        tmE.Hour += i;
       } else {
         tmE.Hour = 0;
       }
       break;
     case 2:
       if (tmE.Minute < 59 ) {
-        tmE.Minute += 5;
+        tmE.Minute += i;
       } else {
         tmE.Minute = 0;
       }
       break;
     case 3:
       if (tmE.Day < 31) {
-        tmE.Day += 5;
+        tmE.Day += i;
       } else {
         tmE.Day = 1;
       }
       break;
     case 4:
       if (tmE.Month < 12) {
-        tmE.Month += 5;
+        tmE.Month += i;
       } else {
         tmE.Month = 1;
       }
       break;
-    case 5: tmE.Year--;
+    case 5: 
+      if (i == 1) {
+          tmE.Year++;
+      } else {
+        tmE.Year -= 1;
+      }
       break;
   }
   menu();
