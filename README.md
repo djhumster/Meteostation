@@ -1,5 +1,15 @@
 # Meteostation
 ![Прототип](https://github.com/djhumster/Meteostation/blob/master/proto.JPG?raw=true)
+
+     Кнопка МЕНЮ:
+      клик (в меню) - меняет страницы меню
+      двойной клик - включает/выключает меню с сохранением изменений
+      длинный клик (в меню) - выход из меню, без сохранения изменений
+     Кнопка "+":
+      клик (в меню) - +1 к значение
+      двойной клик (вне меню) - вкл/выкл подсветку экрана
+      двойной клик (в меню) - +5 к значению, -1 для года
+      
 ### Компоненты:  
 |Кол-во|Наименование|
 |------|------|
@@ -9,6 +19,7 @@
 |1|Резистор 10 кОм|
 |1|Макетная плата|  
 |1|Модуль часов реального времени I2C RTC DS1307|
+|2|Кнопка тактовая|
 ### Требуются библиотеки:
 [New Liquid Crystal](http://arduino-info.wikispaces.com/LCD-Blue-I2C)  
 [DHT-sensor-library](https://learn.adafruit.com/dht)  
@@ -16,7 +27,12 @@
 **диспетчере библиотек Arduino IDE**  
 > ![Arduino IDE](https://cdn-learn.adafruit.com/assets/assets/000/038/115/medium800/weather_Screen_Shot_2016-12-26_at_12.52.24.png?1482753413)
 
-[Adafruit RTClib](https://github.com/adafruit/RTClib/)
+[Time + DS1307RTC](https://playground.arduino.cc/Code/Time)
+>      Time - библиотека времени
+>      DS1307RTC - библиотека для модуля DS1307/DS1337/DS3231
+>      TimeAlarms (сейчас не используется) - можно добавить будильники/таймеры событий
+
+[OneButton](https://github.com/mathertel/OneButton) - работа с кнопками
 ### Макетная схема:  
 ![Breadboard1](https://github.com/djhumster/Meteostation/blob/master/Meteostation_bb.png?raw=true)
 ### Принципиальная схема:  
