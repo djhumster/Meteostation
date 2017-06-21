@@ -37,7 +37,7 @@
 #define MENU_BTN_PIN 3  //  пин кнопки меню
 #define UP_BTN_PIN 4  //  пин кнопки увеличения значений
 
-const String VERSION = "v0.4d"; //  версия кода
+const String VERSION = "v0.5"; //  версия кода
 
 DHT dht(DHTPIN, DHTTYPE);
 
