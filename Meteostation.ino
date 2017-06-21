@@ -308,6 +308,10 @@ void increase (int i) {
   switch (menu_mode) {
     case 1:
       if (tmE.Hour < 23 ) {
+        if (i == 5 && tmE.Hour > 23 - i) {
+            tmE.Hour = 0;
+            break;
+        }
         tmE.Hour += i;
       } else {
         tmE.Hour = 0;
