@@ -37,7 +37,7 @@
 #define MENU_BTN_PIN 3  //  пин кнопки меню
 #define UP_BTN_PIN 4  //  пин кнопки увеличения значений
 
-const String VERSION = "v0.5"; //  версия кода
+const String VERSION = "v0.6d"; //  версия кода
 
 DHT dht(DHTPIN, DHTTYPE);
 
@@ -261,7 +261,6 @@ void up_double_click() {
       lcd.backlight();
       light = 1;
     }
-    return;
   }
 }
 //  отрисовка меню
@@ -309,8 +308,8 @@ void increase (int i) {
     case 1:
       if (tmE.Hour < 23 ) {
         if (i == 5 && tmE.Hour > 23 - i) {
-            tmE.Hour = 0;
-            break;
+          tmE.Hour = (tmE.Hour - 24) + i;
+          break;
         }
         tmE.Hour += i;
       } else {
@@ -319,6 +318,10 @@ void increase (int i) {
       break;
     case 2:
       if (tmE.Minute < 59 ) {
+        if (i == 5 && tmE.Minute > 59 - i) {
+          tmE.Minute = (tmE.Minute - 60) + i;
+          break;
+        }
         tmE.Minute += i;
       } else {
         tmE.Minute = 0;
@@ -326,6 +329,10 @@ void increase (int i) {
       break;
     case 3:
       if (tmE.Day < 31) {
+        if (i == 5 && tmE.Day > 31 - i) {
+          tmE.Day = (tmE.Day - 31) + i;
+          break;
+        }
         tmE.Day += i;
       } else {
         tmE.Day = 1;
@@ -333,16 +340,20 @@ void increase (int i) {
       break;
     case 4:
       if (tmE.Month < 12) {
+        if (i == 5 && tmE.Month > 12 - i) {
+          tmE.Month = (tmE.Month - 12) + i;
+          break;
+        }
         tmE.Month += i;
       } else {
         tmE.Month = 1;
       }
       break;
-    case 5: 
+    case 5:
       if (i == 1) {
-          tmE.Year++;
+        tmE.Year++;
       } else {
-        tmE.Year -= 1;
+        tmE.Year--;
       }
       break;
   }
