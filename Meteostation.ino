@@ -303,7 +303,7 @@ void menu() {
   }
 }
 // Увеличение значений в меню
-void increase (int i) {
+void increase(int i) {
   switch (menu_mode) {
     case 1:
       if (tmE.Hour < 23 ) {
