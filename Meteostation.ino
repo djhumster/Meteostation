@@ -14,13 +14,13 @@
     https://github.com/mathertel/OneButton для работы с кнопками
 */
 #include <Wire.h>
+#include <Adafruit_Sensor.h>
 #include <LiquidCrystal_I2C.h>
 #include <TimeLib.h>
 #include <DS1307RTC.h>
 #include <DHT.h>
-#include <OneButton.h>
-#include <Adafruit_Sensor.h>
 #include <Adafruit_BMP085_U.h>
+#include <OneButton.h>
 
 // задаем тип датчика влажности
 //#define DHTTYPE DHT22
@@ -42,7 +42,7 @@ Adafruit_BMP085_Unified bmp = Adafruit_BMP085_Unified(10085);
 #define MENU_BTN_PIN 3 //  пин кнопки меню
 #define UP_BTN_PIN 4   //  пин кнопки увеличения значений
 
-const String VERSION = "v0.6d"; //  версия кода
+const String VERSION = "v0.6"; //  версия кода
 
 DHT dht(DHTPIN, DHTTYPE);
 
